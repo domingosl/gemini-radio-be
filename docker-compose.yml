@@ -1,5 +1,5 @@
 services:
-  node-app:
+  pod-gen-api:
     image: pod-gen-api
     build:
       context: .
