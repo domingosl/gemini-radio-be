@@ -4,7 +4,7 @@ google-credentials.json
 public/podcasts/*.mp3
 public/podcasts/*.json
 public/podcasts/*.png
-tmp
+tmp/*.mp3
 tests
 node_modules
 npm-debug.log

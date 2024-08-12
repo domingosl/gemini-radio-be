@@ -7,7 +7,7 @@ yarn-error.log
 .npm
 .idea/
 
-tmp
+tmp/*.mp3
 tests
 public/podcasts/*.mp4
 public/podcasts/*.png
