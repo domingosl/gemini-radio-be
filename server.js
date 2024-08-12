@@ -16,13 +16,20 @@ api.use(cors())
 api.use(bodyParser.json({limit: '50mb'}))
 api.use(express.static('public'));
 
+const enforceProtection = (req, res) => {
+    if(req.headers['x-code'] === process.env.JUDGE_CODE)
+        return true
+    res.status(403).json({message: 'You dont have permission to run this command, please read the Judges instructions on how to use your Judge code'})
+    return false
+}
+
 api.get('/status', (req, res) => {
-
     res.json({ status: 'ok'})
-
 })
 
 api.post('/scan', async (req, res) => {
+    if(!enforceProtection(req, res))
+        return
 
     const response = await handWritingExtractor(req.body.image)
     return res.json(response)
@@ -31,6 +38,8 @@ api.post('/scan', async (req, res) => {
 
 
 api.post('/podcast/generate', async (req, res) => {
+    if(!enforceProtection(req, res))
+        return
 
     res.json(await podGen(req.body.letters, req.body.config))
 
