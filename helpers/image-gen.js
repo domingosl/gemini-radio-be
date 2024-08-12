@@ -40,7 +40,7 @@ export async function generateAndStoreImage(prompt, id) {
 
         writeFileSync(filePath, imageBuffer);
 
-        const imageUrl = `${process.env.APP_URL}/podcasts/i-${id}.png`;
+        const imageUrl = `${process.env.API_URL}/podcasts/i-${id}.png`;
         return imageUrl;
     } catch (error) {
         console.error("Error generating image:", error);

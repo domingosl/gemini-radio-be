@@ -67,7 +67,7 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
         fs.writeFileSync('./public/podcasts/p-' + id + '.json', JSON.stringify({
             ...podcastData,
             status: 'done',
-            audioURL: process.env.APP_URL + '/podcasts/p-' + id + '.mp3'
+            audioURL: process.env.API_URL + '/podcasts/p-' + id + '.mp3'
         }))
     }).catch(error => {
         console.log(error)
