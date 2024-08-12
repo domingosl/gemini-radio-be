@@ -1,0 +1,21 @@
+{
+  "name": "podcast-gen",
+  "version": "1.0.0",
+  "main": "server.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^5.3.0",
+    "@google-cloud/vision": "^4.3.0",
+    "@google/generative-ai": "^0.16.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "openai": "^4.55.4",
+    "p-limit": "^6.1.0",
+    "uuid": "^10.0.0"
+  }
+}

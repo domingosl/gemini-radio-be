@@ -1,0 +1,16 @@
+services:
+  node-app:
+    image: pod-gen-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - internal-proxy-network
+    restart: unless-stopped
+
+networks:
+  internal-proxy-network:
+    name: internal-proxy-network
+    driver: bridge

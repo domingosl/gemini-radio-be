@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+.npm
+.idea/
+
+tmp
+tests
+public/podcasts/*.mp4
+public/podcasts/*.png
+public/podcasts/*.json
