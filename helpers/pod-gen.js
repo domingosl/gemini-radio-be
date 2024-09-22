@@ -54,7 +54,7 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
     let fileListFfmpeg = ''
     for (let intervention of podcast.script) {
         i++
-        const filename = 'voice-chunk-' + id + '-' + i + '.mp3'
+        const filename = 'voice-chunk-' + id + '-' + i + '.wav'
         fileListFfmpeg += 'file \'' + filename + '\'\n'
         const task = limit(() => say(intervention.text, intervention.gender, './tmp/' + filename))
         tasks.push(task);

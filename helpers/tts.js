@@ -17,7 +17,7 @@ export const say = async (text, gender, fileName) => {
     const request = {
         input: {text: text},
         voice: {name: 'en-US-Journey-' + (gender === 'male' ? 'D' : 'F'), languageCode: 'en-US'},
-        audioConfig: {audioEncoding: 'MP3'},
+        audioConfig: {audioEncoding: 'LINEAR16'},
     }
 
     const [response] = await client.synthesizeSpeech(request);

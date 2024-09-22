@@ -13,12 +13,12 @@ const fadeDuration = 2
 export const process = async (id, backgroundMusicFilePath) => {
 
     //Voice chunks concat
-    let cmd = "-f concat -safe 0 -i tmp/file-list-{{id}}.txt -c copy tmp/voice-{{id}}.mp3".replaceAll("{{id}}", id)
+    let cmd = "-f concat -safe 0 -i tmp/file-list-{{id}}.txt -c copy tmp/voice-{{id}}.wav".replaceAll("{{id}}", id)
 
     let response = await exec(ffmpegStatic + " " + cmd)
 
     //Final voices length
-    cmd = "-i tmp/voice-{{id}}.mp3 -show_entries format=duration -v quiet -of csv=\"p=0\"".replaceAll("{{id}}", id)
+    cmd = "-i tmp/voice-{{id}}.wav -show_entries format=duration -v quiet -of csv=\"p=0\"".replaceAll("{{id}}", id)
 
     response = await exec(ffprobeStatic.path + " " + cmd)
 
@@ -35,7 +35,7 @@ export const process = async (id, backgroundMusicFilePath) => {
     await exec(ffmpegStatic + " " + cmd)
 
     //Merge voices with background music
-    cmd = "-i tmp/bg-music-{{id}}.mp3 -i tmp/voice-{{id}}.mp3 -filter_complex \"[1]adelay=6000|6000[a];[0][a]amix=inputs=2:duration=first:dropout_transition=3\" -c:a libmp3lame -q:a 2 public/podcasts/p-{{id}}.mp3".replaceAll("{{id}}", id)
+    cmd = "-i tmp/bg-music-{{id}}.mp3 -i tmp/voice-{{id}}.wav -filter_complex \"[1]adelay=6000|6000[a];[0][a]amix=inputs=2:duration=first:dropout_transition=3\" -c:a libmp3lame -q:a 2 public/podcasts/p-{{id}}.mp3".replaceAll("{{id}}", id)
 
     await exec(ffmpegStatic + " " + cmd)
 
