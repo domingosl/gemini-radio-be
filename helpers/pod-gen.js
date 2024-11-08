@@ -4,6 +4,7 @@ import pLimit from 'p-limit'
 import { process as ffProcess } from './ffmpeg.js'
 import { say } from "./tts.js";
 import {generateAndStoreImage, generateImageBase64} from "./image-gen.js";
+import ejs from 'ejs'
 import musicIndex from '../assets/music/index.js'
 
 import {GoogleGenerativeAI} from "@google/generative-ai";
@@ -14,17 +15,18 @@ const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL, genera
 const limit = pLimit(3)
 const tasks = []
 
-const defaultPromptTpl = fs.readFileSync('./defaults/pod-gen-prompt.txt', 'utf8')
+const defaultPromptTpl = fs.readFileSync('./defaults/pod-gen-prompt.ejs', 'utf8')
 
 export default (letters, config) => new Promise(async (resolve, reject) => {
 
-    const prompt = defaultPromptTpl
-        .replace('{{letters}', letters)
-        .replace('{{lettersAddress}}', config.lettersAddress ? 'By the end of the podcast the presenters invite the audience to send their letters to ' + config.lettersAddress : '')
-        .replace('{{hostOneName}}', config.hostOneName)
-        .replace('{{hostTwoName}}', config.hostTwoName)
-        .replace('{{podcastName}}', config.podcastName)
-        .replace('{{weatherInfo}}', config.weatherInfo ? 'Include real weather conditions of Zambia for ' + config.weatherInfo + ", causally mentioned it at the beginning of the episode" : '')
+    const prompt = ejs.render(defaultPromptTpl, {
+        letters,
+        hostOneName: config.hostOneName,
+        hostTwoName: config.hostTwoName,
+        podcastName: config.podcastName,
+        weatherInfo: config.weatherInfo,
+        lettersAddress: config.lettersAddress
+    })
 
     const res = await model.generateContent(prompt)
 
