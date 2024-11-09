@@ -5,7 +5,7 @@ import { process as ffProcess } from './ffmpeg.js'
 import { say } from "./tts.js";
 import {generateAndStoreImage, generateImageBase64} from "./image-gen.js";
 import ejs from 'ejs'
-import musicIndex from '../assets/music/index.js'
+import musicIndex from '../public/music/index.js'
 
 import {GoogleGenerativeAI} from "@google/generative-ai";
 
@@ -16,65 +16,89 @@ const limit = pLimit(3)
 const tasks = []
 
 const defaultPromptTpl = fs.readFileSync('./defaults/pod-gen-prompt.ejs', 'utf8')
+const musicSelectionPromptTpl = fs.readFileSync('./defaults/music-selection-prompt.ejs', 'utf8')
 
 export default (letters, config) => new Promise(async (resolve, reject) => {
 
-    const prompt = ejs.render(defaultPromptTpl, {
-        letters,
-        hostOneName: config.hostOneName,
-        hostTwoName: config.hostTwoName,
-        podcastName: config.podcastName,
-        weatherInfo: config.weatherInfo,
-        lettersAddress: config.lettersAddress
-    })
+    try {
+        const prompt = ejs.render(defaultPromptTpl, {
+            letters,
+            hostOneName: config.hostOneName,
+            hostTwoName: config.hostTwoName,
+            podcastName: config.podcastName,
+            weatherInfo: config.weatherInfo,
+            lettersAddress: config.lettersAddress
+        })
 
-    const res = await model.generateContent(prompt)
+        const res = await model.generateContent(prompt)
 
-    const backgroundMusicFilePath = 'assets/music/' + musicIndex.find(music => music.id === parseInt(config.backgroundMusic)).file
+        const podcast = JSON.parse(
+          res.response.candidates[0].content.parts[0].text)
 
-    console.log(config, prompt, backgroundMusicFilePath)
+        const id = uuidv4()
 
-    const podcast = JSON.parse(res.response.candidates[0].content.parts[0].text)
+        const podcastData = {
+            id,
+            title: podcast.title,
+            imageURL: await generateAndStoreImage(podcast.imagePrompt, id),
+            synopsis: podcast.synopsis,
+            script: podcast.script.reduce((prev, cur) => {
+                prev += (cur.gender === 'male'
+                  ? 'him: '
+                  : 'her: ') + cur.text + '\n';
+                return prev
+            }, ''),
+            status: 'generating',
+            date: new Date().toISOString()
+        }
 
-    const id = uuidv4()
+        resolve({
+            podcast: podcastData
+        })
 
-    const podcastData = {
-        id,
-        title: podcast.title,
-        imageURL: await generateAndStoreImage(podcast.imagePrompt, id),
-        synopsis: podcast.synopsis,
-        script: podcast.script.reduce((prev, cur) => { prev += (cur.gender === 'male' ? 'him: ' : 'her: ') + cur.text + '\n'; return prev }, ''),
-        status: 'generating',
-        date: new Date().toISOString()
+        let i = -1
+        let fileListFfmpeg = ''
+        for (let intervention of podcast.script) {
+            i++
+            const filename = 'voice-chunk-' + id + '-' + i + '.wav'
+            fileListFfmpeg += 'file \'' + filename + '\'\n'
+            const task = limit(() => say(intervention.text, intervention.gender,
+              './tmp/' + filename))
+            tasks.push(task);
+        }
+
+        await Promise.all(tasks)
+
+        let backgroundMusicFilePath
+
+        if(config.backgroundMusic === "-1") {
+            const musicSelPrompt = ejs.render(musicSelectionPromptTpl, {
+                podcastSynopsis: podcastData.synopsis,
+                musicList: musicIndex.map(music => (JSON.stringify({ id: music.id, tags: music.tags })))
+            })
+            const res = await model.generateContent(musicSelPrompt)
+            config.backgroundMusic = JSON.parse(res.response.candidates[0].content.parts[0].text).id
+        }
+
+        backgroundMusicFilePath = 'public/music/' + musicIndex.find(
+          music => music.id === parseInt(config.backgroundMusic)).file
+
+        fs.writeFileSync('./tmp/file-list-' + id + '.txt', fileListFfmpeg)
+        ffProcess(id, backgroundMusicFilePath).then(() => {
+            fs.writeFileSync('./public/podcasts/p-' + id + '.json',
+              JSON.stringify({
+                  ...podcastData,
+                  status: 'done',
+                  audioURL: process.env.API_URL + '/podcasts/p-' + id + '.mp3'
+              }))
+        }).catch(error => {
+            console.log(error)
+            fs.writeFileSync('./public/podcasts/p-' + id + '.json',
+              JSON.stringify({...podcastData, status: 'error', error}))
+        })
+    } catch (error) {
+        console.log("Failed to generate the podcast", { error })
+        reject(error)
     }
-
-    resolve({
-        podcast: podcastData
-    })
-
-    let i = -1
-    let fileListFfmpeg = ''
-    for (let intervention of podcast.script) {
-        i++
-        const filename = 'voice-chunk-' + id + '-' + i + '.wav'
-        fileListFfmpeg += 'file \'' + filename + '\'\n'
-        const task = limit(() => say(intervention.text, intervention.gender, './tmp/' + filename))
-        tasks.push(task);
-    }
-
-    await Promise.all(tasks)
-
-    fs.writeFileSync('./tmp/file-list-' + id + '.txt', fileListFfmpeg)
-    ffProcess(id, backgroundMusicFilePath).then(()=>{
-        fs.writeFileSync('./public/podcasts/p-' + id + '.json', JSON.stringify({
-            ...podcastData,
-            status: 'done',
-            audioURL: process.env.API_URL + '/podcasts/p-' + id + '.mp3'
-        }))
-    }).catch(error => {
-        console.log(error)
-        fs.writeFileSync('./public/podcasts/p-' + id + '.json', JSON.stringify({...podcastData, status: 'error', error}))
-    })
-
 
 })

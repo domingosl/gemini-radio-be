@@ -7,7 +7,7 @@ import handWritingExtractor from "./helpers/hand-writing-extractor.js"
 import podGen from "./helpers/pod-gen.js"
 import { resolve as resolvePath, extname } from 'node:path'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
-import musicIndex from './assets/music/index.js'
+import musicIndex from './public/music/index.js'
 
 const api = express()
 
@@ -38,10 +38,12 @@ api.post('/scan', async (req, res) => {
 
 
 api.post('/podcast/generate', async (req, res) => {
-    if(!enforceProtection(req, res))
-        return
+    //if(!enforceProtection(req, res))
+    //    return
+    podGen(req.body.letters, req.body.config)
+    .then(r => res.json(r))
+    .catch(()=>res.status(403).json({ message: "Podcast generation failed" }))
 
-    res.json(await podGen(req.body.letters, req.body.config))
 
 })
 

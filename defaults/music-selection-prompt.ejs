@@ -1,0 +1,14 @@
+Task: Select the most fitting background music for a podcast episode based on the provided podcast synopsis and the list of available songs.
+
+<podcastSynopsis>
+    <%= podcastSynopsis %>
+</podcastSynopsis>
+
+<musicList>
+    <%= musicList %>
+</musicList>
+
+Instructions:
+- Each song in the music list has an ID field and a TAGS field describing its characteristics.
+- Your task is to select only one song whose tags best match the podcast synopsis.
+- Answer Format: Your answer is a valid JSON object like this example: { "id": 2 }

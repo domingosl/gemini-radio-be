@@ -15,22 +15,22 @@ export const process = async (id, backgroundMusicFilePath) => {
     //Voice chunks concat
     let cmd = "-f concat -safe 0 -i tmp/file-list-{{id}}.txt -c copy tmp/voice-{{id}}.wav".replaceAll("{{id}}", id)
 
-    let response = await exec(ffmpegStatic + " " + cmd)
+    await exec(ffmpegStatic + " " + cmd)
 
     //Final voices length
     cmd = "-i tmp/voice-{{id}}.wav -show_entries format=duration -v quiet -of csv=\"p=0\"".replaceAll("{{id}}", id)
 
-    response = await exec(ffprobeStatic.path + " " + cmd)
+    const response = await exec(ffprobeStatic.path + " " + cmd)
 
     const voiceDuration = Math.ceil(parseFloat(response.stdout.replace('\n', '')))
     const voiceEndAt = voiceDuration + musicIntroDuration + Math.ceil(fadeDuration / 2)
 
     //Volume fading in background music
-    cmd = "-i " + backgroundMusicFilePath + " -filter_complex \"" +
-        "[0]volume=1:enable='between(t,0," + musicIntroDuration + ")'," +
-        "volume='if(between(t," + musicIntroDuration + "," + (musicIntroDuration + fadeDuration) + "),1-(0.45*(t-" + musicIntroDuration + ")),0.1)':eval=frame:enable='between(t," + (musicIntroDuration) + "," + voiceEndAt + ")'," +
-        "volume='if(between(t," + voiceEndAt + "," + (voiceEndAt + fadeDuration) + "),0.1+(0.45*(t-" + voiceEndAt + ")),1)':eval=frame:enable='between(t," + voiceEndAt + "," + (voiceEndAt + musicIntroDuration) + ")'\" " +
-        "-t " + (voiceEndAt + musicIntroDuration) + " tmp/bg-music-" + id + ".mp3"
+    cmd = "-stream_loop -1 -i " + backgroundMusicFilePath + " -filter_complex \"" +
+      "[0]volume=1:enable='between(t,0," + musicIntroDuration + ")'," +
+      "volume='if(between(t," + musicIntroDuration + "," + (musicIntroDuration + fadeDuration) + "),1-(0.45*(t-" + musicIntroDuration + ")),0.05)':eval=frame:enable='between(t," + musicIntroDuration + "," + voiceEndAt + ")'," +
+      "volume='if(between(t," + voiceEndAt + "," + (voiceEndAt + fadeDuration) + "),0.1+(0.45*(t-" + voiceEndAt + ")),1)':eval=frame:enable='between(t," + voiceEndAt + "," + (voiceEndAt + musicIntroDuration) + ")'\" " +
+      "-t " + (voiceEndAt + musicIntroDuration) + " tmp/bg-music-" + id + ".mp3"
 
     await exec(ffmpegStatic + " " + cmd)
 
