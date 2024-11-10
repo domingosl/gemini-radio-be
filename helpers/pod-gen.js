@@ -4,6 +4,7 @@ import pLimit from 'p-limit'
 import { process as ffProcess } from './ffmpeg.js'
 import { say } from "./tts.js";
 import {generateAndStoreImage, generateImageBase64} from "./image-gen.js";
+import { getSongs } from './jamendo.js'
 import ejs from 'ejs'
 import musicIndex from '../public/music/index.js'
 
@@ -21,13 +22,21 @@ const musicSelectionPromptTpl = fs.readFileSync('./defaults/music-selection-prom
 export default (letters, config) => new Promise(async (resolve, reject) => {
 
     try {
+
+        let songBefore
+        if(config.includeIntroMusic) {
+            const songs = await getSongs()
+            songBefore = songs[Math.floor(Math.random() * songs.length)]
+        }
+
         const prompt = ejs.render(defaultPromptTpl, {
             letters,
             hostOneName: config.hostOneName,
             hostTwoName: config.hostTwoName,
             podcastName: config.podcastName,
             weatherInfo: config.weatherInfo,
-            lettersAddress: config.lettersAddress
+            lettersAddress: config.lettersAddress,
+            songBefore
         })
 
         const res = await model.generateContent(prompt)
@@ -83,8 +92,9 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
         backgroundMusicFilePath = 'public/music/' + musicIndex.find(
           music => music.id === parseInt(config.backgroundMusic)).file
 
+
         fs.writeFileSync('./tmp/file-list-' + id + '.txt', fileListFfmpeg)
-        ffProcess(id, backgroundMusicFilePath).then(() => {
+        ffProcess(id, backgroundMusicFilePath, songBefore?.audiodownload).then(() => {
             fs.writeFileSync('./public/podcasts/p-' + id + '.json',
               JSON.stringify({
                   ...podcastData,

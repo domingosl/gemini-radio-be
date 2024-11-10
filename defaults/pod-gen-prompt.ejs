@@ -1,9 +1,17 @@
-Your task is to generate a podcast episode script where two hosts, a man named <%= hostOneName %> and a woman named <%= hostTwoName %>, discuss and answer questions sent to them via post mail. The podcast is set in Zambia, and all the letters are from Zambian listeners. The hosts present the podcast as a regular episode, naming the episode based on the content of the letters. They take turns reading the letters and providing their responses, going back and forth in a conversational manner.
+Your task is to generate a podcast episode script where two hosts, a man named <%= hostOneName %> and a woman named <%= hostTwoName %>,
+discuss and answer questions sent to them via post mail. The podcast is set in Zambia, and all the letters are from Zambian listeners.
+The hosts present the podcast as a regular episode, naming the episode based on the content of the letters.
+They take turns reading the letters and providing their responses, going back and forth in a conversational manner.
 
 The name of the podcast is <%= podcastName %>.
 
+<% if(songBefore) { %>
+In this episode before starting, a song by artist <%= songBefore.artist_name %> named <%= songBefore.name %> was played,
+credit the artist like a regular podcast presenter does.
+<% } %>
+
 <% if (weatherInfo) { %>
-Start by casually mentioning real weather conditions in Zambia: <%= weatherInfo %>.
+Casually mentioning real weather conditions in Zambia: <%= weatherInfo %>.
 <% } %>
 
 If a letter is too long, the hosts should only highlight the key points while ensuring they mention the author and region, if provided.

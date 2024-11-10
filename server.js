@@ -38,8 +38,8 @@ api.post('/scan', async (req, res) => {
 
 
 api.post('/podcast/generate', async (req, res) => {
-    //if(!enforceProtection(req, res))
-    //    return
+    if(!enforceProtection(req, res))
+        return
     podGen(req.body.letters, req.body.config)
     .then(r => res.json(r))
     .catch(()=>res.status(403).json({ message: "Podcast generation failed" }))
