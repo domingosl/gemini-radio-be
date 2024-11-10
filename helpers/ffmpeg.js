@@ -38,20 +38,30 @@ export const process = async (id, backgroundMusicFilePath, songBeforeURL) => {
     //Merge voices with background music
     const delayMs = (musicIntroDuration * 1000) + 1000;
 
-    const songInput = songBeforeURL ? "-i \"" + songBeforeURL + "\"" : "-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100";
+    const songInput = songBeforeURL ? `-i "${songBeforeURL}"` : "";
 
-    cmd = songInput + " -i tmp/bg-music-" + id + ".mp3 -i tmp/voice-" + id + ".wav " +
-      "-filter_complex \"" +
-      "[2]adelay=" + delayMs + "|" + delayMs + ",asetpts=PTS-STARTPTS[a]; " +
-      "[1][a]amix=inputs=2:duration=first:dropout_transition=3, " +
-      "aformat=sample_fmts=s16:sample_rates=44100:channel_layouts=stereo[mixed]; " +
-      "[0]asetpts=PTS-STARTPTS[intro]; " +
-      "[mixed]asetpts=PTS-STARTPTS[content]; " +
-      "[intro][content]concat=n=2:v=0:a=1[out]" +
-      "\" " +
-      "-map \"[out]\" -c:a libmp3lame -q:a 2 public/podcasts/p-" + id + ".mp3";
+    if (songBeforeURL) {
+        // If songBeforeURL is provided, include the intro
+        cmd = `${songInput} -i tmp/bg-music-${id}.mp3 -i tmp/voice-${id}.wav ` +
+          `-filter_complex "` +
+          `[2]adelay=${delayMs}|${delayMs},asetpts=PTS-STARTPTS[a]; ` +
+          `[1][a]amix=inputs=2:duration=first:dropout_transition=3, ` +
+          `aformat=sample_fmts=s16:sample_rates=44100:channel_layouts=stereo[mixed]; ` +
+          `[0]asetpts=PTS-STARTPTS[intro]; ` +
+          `[mixed]asetpts=PTS-STARTPTS[content]; ` +
+          `[intro][content]concat=n=2:v=0:a=1[out]" ` +
+          `-map "[out]" -c:a libmp3lame -q:a 2 public/podcasts/p-${id}.mp3`;
+    } else {
+        // If songBeforeURL is empty, skip the intro
+        cmd = `-i tmp/bg-music-${id}.mp3 -i tmp/voice-${id}.wav ` +
+          `-filter_complex "` +
+          `[1]adelay=${delayMs}|${delayMs},asetpts=PTS-STARTPTS[a]; ` +
+          `[0][a]amix=inputs=2:duration=first:dropout_transition=3, ` +
+          `aformat=sample_fmts=s16:sample_rates=44100:channel_layouts=stereo[out]" ` +
+          `-map "[out]" -c:a libmp3lame -q:a 2 public/podcasts/p-${id}.mp3`;
+    }
 
-    await exec(ffmpegStatic + " " + cmd)
+    await exec(`${ffmpegStatic} ${cmd}`);
 
     fs.readdir('./tmp', (err, files) => {
         if (err) throw err;

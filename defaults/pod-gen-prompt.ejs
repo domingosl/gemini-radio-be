@@ -11,7 +11,7 @@ credit the artist like a regular podcast presenter does.
 <% } %>
 
 <% if (weatherInfo) { %>
-Casually mentioning real weather conditions in Zambia: <%= weatherInfo %>.
+At the beginning casually mentioning real weather conditions in Zambia: <%= weatherInfo %>.
 <% } %>
 
 If a letter is too long, the hosts should only highlight the key points while ensuring they mention the author and region, if provided.
@@ -34,6 +34,15 @@ You must respond with a valid JSON object in the following format:
 The "title" should be based on the content of the letters. The "imagePrompt" should describe in modern, elegant, realistic style, a minimal podcast thumbnail that aligns with the episode title and contains no text. The "script" is an array where each object contains the "text" spoken by the host and the "gender" of the speaker.
 
 Use any knowledge you have about Zambia and/or the area where the author of the letters write from to complement the narration, the podcast hosts are natives of Zambia, reflect that in the script.
+
+<% if (news) { %>
+Here are the latest news updates from Zambia, provided by Lusaka Times. Review these stories carefully and use any relevant information to address the listener’s inquiries.
+For instance, if a listener has questions about starting an animal farm, and there’s news about government subsidies for new farms, make sure to highlight that information in your response.
+If a news item is not relevant to this episode’s questions, feel free to skip it.
+<news>
+<%= news %>
+</news>
+<% } %>
 
 <% if (lettersAddress) { %>
 By the end of the podcast, the presenters invite the audience to send their letters to <%= lettersAddress %>.

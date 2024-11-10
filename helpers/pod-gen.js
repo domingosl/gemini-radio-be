@@ -5,6 +5,7 @@ import { process as ffProcess } from './ffmpeg.js'
 import { say } from "./tts.js";
 import {generateAndStoreImage, generateImageBase64} from "./image-gen.js";
 import { getSongs } from './jamendo.js'
+import getNews from './news.js'
 import ejs from 'ejs'
 import musicIndex from '../public/music/index.js'
 
@@ -29,6 +30,8 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
             songBefore = songs[Math.floor(Math.random() * songs.length)]
         }
 
+        const news = await getNews()
+
         const prompt = ejs.render(defaultPromptTpl, {
             letters,
             hostOneName: config.hostOneName,
@@ -36,7 +39,8 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
             podcastName: config.podcastName,
             weatherInfo: config.weatherInfo,
             lettersAddress: config.lettersAddress,
-            songBefore
+            songBefore,
+            news: news.length > 0 ? JSON.stringify(news) : undefined
         })
 
         const res = await model.generateContent(prompt)
