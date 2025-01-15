@@ -14,11 +14,13 @@ import {GoogleGenerativeAI} from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL, generationConfig: { responseMimeType: 'application/json' } })
 
-const limit = pLimit(3)
+const limit = pLimit(2)
 const tasks = []
 
 const defaultPromptTpl = fs.readFileSync('./defaults/pod-gen-prompt.ejs', 'utf8')
 const musicSelectionPromptTpl = fs.readFileSync('./defaults/music-selection-prompt.ejs', 'utf8')
+
+const ttsProvider = process.env.TTS_PROVIDER
 
 export default (letters, config) => new Promise(async (resolve, reject) => {
 
@@ -31,6 +33,8 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
         }
 
         const news = await getNews()
+
+        config = { v: 1, ...config }
 
         const prompt = ejs.render(defaultPromptTpl, {
             letters,
@@ -53,13 +57,11 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
         const podcastData = {
             id,
             title: podcast.title,
-            imageURL: await generateAndStoreImage(podcast.imagePrompt, id),
+            imageURL: process.env.GEN_POD_IMAGE === 'true' ? await generateAndStoreImage(podcast.imagePrompt, id) : null,
             synopsis: podcast.synopsis,
             script: podcast.script.reduce((prev, cur) => {
-                prev += (cur.gender === 'male'
-                  ? 'him: '
-                  : 'her: ') + cur.text + '\n';
-                return prev
+                prev += (cur.gender === 'male' ? 'him: ' : 'her: ') + cur.text + '\n';
+                return prev;
             }, ''),
             status: 'generating',
             date: new Date().toISOString()
@@ -69,15 +71,23 @@ export default (letters, config) => new Promise(async (resolve, reject) => {
             podcast: podcastData
         })
 
-        let i = -1
         let fileListFfmpeg = ''
-        for (let intervention of podcast.script) {
-            i++
-            const filename = 'voice-chunk-' + id + '-' + i + '.wav'
+        if(ttsProvider !== 'fal') {
+            let i = -1
+            for (let intervention of podcast.script) {
+                i++
+                const filename = 'voice-chunk-' + id + '-' + i +
+                  (ttsProvider === 'elevenlabs' ? '.mp3' : '.wav')
+                fileListFfmpeg += 'file \'' + filename + '\'\n'
+                const task = limit(
+                  () => say(intervention.text, intervention.gender,
+                    './tmp/' + filename, ttsProvider))
+                tasks.push(task);
+            }
+        } else {
+            const filename = 'voice-chunk-' + id + '-1-fal.mp3'
             fileListFfmpeg += 'file \'' + filename + '\'\n'
-            const task = limit(() => say(intervention.text, intervention.gender,
-              './tmp/' + filename))
-            tasks.push(task);
+            tasks.push(say(podcastData.script, null, './tmp/' + filename, ttsProvider))
         }
 
         await Promise.all(tasks)
