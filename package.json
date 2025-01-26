@@ -11,6 +11,7 @@
     "@google/generative-ai": "^0.16.0",
     "axios": "^1.7.7",
     "body-parser": "1.20.3",
+    "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
@@ -20,6 +21,7 @@
     "ffprobe-static": "^3.1.0",
     "openai": "^4.55.4",
     "p-limit": "^6.1.0",
+    "puppeteer": "^24.1.0",
     "rss-parser": "^3.13.0",
     "uuid": "^10.0.0"
   }
