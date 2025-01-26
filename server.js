@@ -5,9 +5,12 @@ import cors from 'cors'
 import bodyParser from "body-parser"
 import handWritingExtractor from "./helpers/hand-writing-extractor.js"
 import podGen from "./helpers/pod-gen.js"
-import { resolve as resolvePath, extname } from 'node:path'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { resolve as resolvePath, extname, join as joinPath } from 'node:path'
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import musicIndex from './public/music/index.js'
+import { v4 as uuidv4 } from 'uuid'
+import { say } from './helpers/tts.js'
+import image2text from './helpers/image2text.js'
 
 const api = express()
 
@@ -79,6 +82,33 @@ api.get('/podcast/:id', (req, res) => {
 
 api.get('/music', (req, res) => {
     res.json(musicIndex)
+})
+
+api.post('/tools/tts', async (req, res) => {
+    const filename = `${uuidv4()}.mp3`
+    const filepath = joinPath('public', 'tts', filename)
+    console.log(req.body)
+    await say(req.body.text, 'male', filepath, 'google')
+
+    res.json({
+        audioUrl: `${req.protocol}://${req.get('host')}/tts/${filename}`
+    })
+})
+
+api.post('/tools/image2text', async (req, res) => {
+
+    const payload = JSON.parse(req.body.data.replaceAll("'", '"'))
+    let response = ""
+    let pictureIndex = 1
+    for (const image of payload) {
+        if(pictureIndex > 4)
+            continue
+        response += "Picture" + pictureIndex + ": " + await image2text(image.s3_url_full) + ". "
+        pictureIndex++
+    }
+
+    res.send(response)
+
 })
 
 api.listen(process.env.API_PORT, () => console.log('pod-gen-api now running on port', process.env.API_PORT))
