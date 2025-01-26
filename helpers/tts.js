@@ -58,12 +58,12 @@ export const say = (text, gender, fileName, provider = 'google') => new Promise(
                 input: text,
                 voices: [
                     {
-                        voice: 'Jennifer (English (US)/American)',
-                        turn_prefix: 'her: '
+                        voice: 'Dexter (English (US)/American)',
+                        turn_prefix: 'him: '
                     },
                     {
-                        voice: 'Furio (English (IT)/Italian)',
-                        turn_prefix: 'him: '
+                        voice: 'Jennifer (English (US)/American)',
+                        turn_prefix: 'her: '
                     }
                 ]
             },
